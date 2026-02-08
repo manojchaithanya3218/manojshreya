@@ -3,95 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valentine Quiz</title>
-
+<title>Valentine</title>
 <style>
 body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background-image: url("love1.webp"); /* FIRST BACKGROUND */
+    font-family: Arial, sans-serif;
+    background-image: url("love1.webp");
     background-size: cover;
     background-position: center;
     min-height: 100vh;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+/* COMMON BOX */
 .container {
-    background: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.92);
     padding: 20px;
     border-radius: 20px;
     text-align: center;
-    max-width: 90%;
+    width: 90%;
+    max-width: 420px;
+    z-index: 5;
 }
 
+/* HEADINGS */
 h1 {
-    font-size: 32px;
     color: #d63384;
+    font-size: clamp(24px, 6vw, 34px);
 }
 
+/* INPUT */
 input {
-    padding: 10px;
+    padding: 12px;
     font-size: 18px;
-    width: 80%;
-    margin-top: 10px;
+    width: 90%;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    margin-top: 12px;
 }
 
+/* BUTTONS */
 button {
-    margin: 10px;
-    padding: 12px 22px;
+    padding: 14px 26px;
     font-size: 18px;
     border: none;
     border-radius: 30px;
     cursor: pointer;
+    margin: 10px;
 }
 
-#nextBtn {
-    background: #ff69b4;
-    color: white;
-}
-
-#yesBtn {
-    background: #ff4081;
-    color: white;
-}
+#nextBtn { background: #ff69b4; color: white; }
+#yesBtn { background: #ff4081; color: white; }
 
 #noBtn {
-    background: #999;
+    background: gray;
     color: white;
-    position: relative;
+    position: absolute;
 }
 
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
 
+/* IMAGE */
 .photo {
     width: 100%;
-    height: auto;        /* KEY FIX */
+    max-height: 300px;
     object-fit: contain;
-    margin-top: 15px;
     border-radius: 20px;
+    margin-top: 15px;
 }
 
+/* LOVE MESSAGE */
+#loveText {
+    margin-top: 15px;
+    text-align: center;
+    font-size: clamp(14px, 4vw, 18px);
+    line-height: 1.6;
+    color: #333;
+    font-weight: 500;
+    white-space: pre-line;
+}
 
 /* HEARTS */
 .heart {
     position: fixed;
     font-size: 24px;
-    animation: spin 3s linear infinite;
+    top: -10vh;
+    animation: fall linear infinite;
+    z-index: 1;
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes fall {
+    to {
+        transform: translateY(110vh) rotate(360deg);
+    }
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+    button {
+        width: 80%;
+        margin: 8px auto;
+        display: block;
+    }
+    .photo {
+        max-height: 240px;
+    }
 }
 </style>
 </head>
 
 <body>
 
+<!-- BACKGROUND MUSIC -->
+<audio id="bgMusic" src="myaudio.mpeg" loop></audio>
+
+<!-- QUIZ -->
 <div class="container" id="quizBox">
     <h1 id="question">What is your favorite colour?</h1>
     <input type="text" id="answer" placeholder="Type answer">
@@ -99,75 +128,150 @@ button {
     <button id="nextBtn">Next</button>
 </div>
 
+<!-- VALENTINE -->
 <div class="container hidden" id="valentineBox">
-    <h1>Will you be my Valentine?</h1>
-    <button id="yesBtn">YES ❤️</button>
-    <button id="noBtn">NO 🙃</button>
+    <h1>Will you be my Valentine? ❤️</h1>
+    <button id="yesBtn">YES</button>
+    <button id="noBtn">NO</button>
 </div>
 
+<!-- AFTER YES -->
 <div class="container hidden" id="yesBox">
-    <h1 style="font-size:40px;">I am yours raa ❤️</h1>
+    <h1>I am yours raa ❤️</h1>
+    <div id="loveText"></div>
     <img src="her.jpg" class="photo">
 </div>
 
 <audio id="successSound" src="success.mp3"></audio>
 
 <script>
+/* ------------------ START MUSIC ON FIRST CLICK ------------------ */
+const bgMusic = document.getElementById("bgMusic");
+document.body.addEventListener("click", () => {
+    bgMusic.play().catch(()=>{}); // ensures mobile autoplay
+}, { once: true });
+
+/* ------------------ QUIZ DATA ------------------ */
 const questions = [
     { q: "What is your favorite colour?", a: "black" },
     { q: "What is your favorite fruit?", a: "watermelon" },
     { q: "What is your favorite snack?", a: "pani puri" }
 ];
 
-let index = 0;
-
-const questionEl = document.getElementById("question");
-const answerEl = document.getElementById("answer");
+let i = 0;
 const quizBox = document.getElementById("quizBox");
 const valentineBox = document.getElementById("valentineBox");
 const yesBox = document.getElementById("yesBox");
+const questionEl = document.getElementById("question");
+const answerEl = document.getElementById("answer");
 const sound = document.getElementById("successSound");
+const noBtn = document.getElementById("noBtn");
 
-document.getElementById("nextBtn").onclick = () => {
-    if (answerEl.value.toLowerCase().trim() === questions[index].a) {
-        index++;
+/* ------------------ QUIZ FUNCTION ------------------ */
+document.getElementById("nextBtn").onclick = next;
+answerEl.addEventListener("keydown", e => e.key === "Enter" && next());
+
+function next() {
+    if (answerEl.value.toLowerCase().trim() === questions[i].a) {
+        i++;
         answerEl.value = "";
-
-        if (index < questions.length) {
-            questionEl.textContent = questions[index].q;
+        if (i < questions.length) {
+            questionEl.textContent = questions[i].q;
         } else {
             quizBox.classList.add("hidden");
             valentineBox.classList.remove("hidden");
             sound.play();
-            if (navigator.vibrate) navigator.vibrate(300);
+            navigator.vibrate?.(300);
         }
     } else {
         alert("Wrong answer 😜 Try again");
     }
-};
+}
 
-document.getElementById("noBtn").onclick = () => {
-    const btn = document.getElementById("noBtn");
-    btn.style.left = Math.random()*200 - 100 + "px";
-    btn.style.top = Math.random()*200 - 100 + "px";
-};
+/* ------------------ NO BUTTON RUNAWAY ------------------ */
+noBtn.addEventListener("mouseover", moveNo);
+noBtn.addEventListener("click", moveNo);
 
+function moveNo() {
+    noBtn.style.left = Math.random() * (window.innerWidth - 100) + "px";
+    noBtn.style.top = Math.random() * (window.innerHeight - 50) + "px";
+}
+
+/* ------------------ YES BUTTON ------------------ */
 document.getElementById("yesBtn").onclick = () => {
     valentineBox.classList.add("hidden");
     yesBox.classList.remove("hidden");
-    document.body.style.backgroundImage = 'url("love5.jpeg")'; // AFTER YES
-
-    for (let i = 0; i < 25; i++) {
-        const h = document.createElement("div");
-        h.innerHTML = "❣️";
-        h.className = "heart";
-        h.style.left = Math.random()*100 + "vw";
-        h.style.top = Math.random()*100 + "vh";
-        document.body.appendChild(h);
-    }
+    document.body.style.backgroundImage = 'url("love4.jpeg")';
+    startHearts();
+    typeLoveText();  // typing effect
 };
-</script>
 
+/* ------------------ FALLING HEARTS ------------------ */
+function startHearts() {
+    setInterval(() => {
+        const h = document.createElement("div");
+        h.className = "heart";
+        h.innerHTML = "❣️";
+        h.style.left = Math.random() * 100 + "vw";
+        h.style.animationDuration = (3 + Math.random() * 3) + "s";
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 7000);
+    }, 200);
+}
+
+/* ------------------ LOVE MESSAGE TYPING ------------------ */
+const loveMessage = `
+Neku eve cheppanu ani kaadu…
+Nenu unta ane oka nijam matrame cheppali anukuntunna.
+Ippudu okasare cheptunna.
+Na brain, na heart, na soul —
+anni okate cheptunnayi.
+Dayachesi na matlalu poorthiga vinu.
+Ee universe lo chala planets unnayi.
+Ee earth lo lakshala koti jeevalu unnayi.
+Billions of humans madhya
+nenu okadni,
+neenu oka chinna jeevini.
+Kaani ee chinna jeeviki
+oka pranam undi,
+oka body undi,
+oka soul undi.
+Adhe nenu.
+Ee earth meeda nenu bathukutunna varaku
+ee body naadi.
+Ee body poyina taruvatha kuda
+na soul migulutundi.
+Aa soul okate cheptundi:
+nuvvu na wife, na life partner.
+Na jeevitham antham varaku kaadu—
+na jeevitham taruvatha kuda.
+Ee body pothe,
+na soul nee soul ni vetukutundi,
+nee soul ni kalusukuntundi.
+Manam kalisi untam.
+Prematho, dhairyamtho, nammakamtho.
+Children, problems, ee rough life anni vachina
+manam kalisi edurukuntam.
+Swargam ayina, narakam ayina,
+place emaina sare—
+nee pakkana unte adhe na swargam.
+Idhe nenu.
+Idhe na nijam.
+Idhe na premaku antham leni promise
+`;
+
+function typeLoveText() {
+    const target = document.getElementById("loveText");
+    target.innerHTML = "";
+    const words = loveMessage.split(" ");
+    let index = 0;
+    const interval = setInterval(() => {
+        target.innerHTML += words[index] + " ";
+        index++;
+        if (index >= words.length) clearInterval(interval);
+    }, 120);
+}
+</script>
 </body>
 </html>
 
