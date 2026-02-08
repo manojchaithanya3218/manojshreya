@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valentine Quiz</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-image: url("love1.webp"); /* FIRST BACKGROUND */
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    background: rgba(255,255,255,0.85);
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 90%;
+}
+
+h1 {
+    font-size: 32px;
+    color: #d63384;
+}
+
+input {
+    padding: 10px;
+    font-size: 18px;
+    width: 80%;
+    margin-top: 10px;
+}
+
+button {
+    margin: 10px;
+    padding: 12px 22px;
+    font-size: 18px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+}
+
+#nextBtn {
+    background: #ff69b4;
+    color: white;
+}
+
+#yesBtn {
+    background: #ff4081;
+    color: white;
+}
+
+#noBtn {
+    background: #999;
+    color: white;
+    position: relative;
+}
+
+.hidden {
+    display: none;
+}
+
+.photo {
+    width: 100%;
+    height: auto;        /* KEY FIX */
+    object-fit: contain;
+    margin-top: 15px;
+    border-radius: 20px;
+}
+
+
+/* HEARTS */
+.heart {
+    position: fixed;
+    font-size: 24px;
+    animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="quizBox">
+    <h1 id="question">What is your favorite colour?</h1>
+    <input type="text" id="answer" placeholder="Type answer">
+    <br>
+    <button id="nextBtn">Next</button>
+</div>
+
+<div class="container hidden" id="valentineBox">
+    <h1>Will you be my Valentine?</h1>
+    <button id="yesBtn">YES ❤️</button>
+    <button id="noBtn">NO 🙃</button>
+</div>
+
+<div class="container hidden" id="yesBox">
+    <h1 style="font-size:40px;">I am yours raa ❤️</h1>
+    <img src="her.jpg" class="photo">
+</div>
+
+<audio id="successSound" src="success.mp3"></audio>
+
+<script>
+const questions = [
+    { q: "What is your favorite colour?", a: "black" },
+    { q: "What is your favorite fruit?", a: "watermelon" },
+    { q: "What is your favorite snack?", a: "pani puri" }
+];
+
+let index = 0;
+
+const questionEl = document.getElementById("question");
+const answerEl = document.getElementById("answer");
+const quizBox = document.getElementById("quizBox");
+const valentineBox = document.getElementById("valentineBox");
+const yesBox = document.getElementById("yesBox");
+const sound = document.getElementById("successSound");
+
+document.getElementById("nextBtn").onclick = () => {
+    if (answerEl.value.toLowerCase().trim() === questions[index].a) {
+        index++;
+        answerEl.value = "";
+
+        if (index < questions.length) {
+            questionEl.textContent = questions[index].q;
+        } else {
+            quizBox.classList.add("hidden");
+            valentineBox.classList.remove("hidden");
+            sound.play();
+            if (navigator.vibrate) navigator.vibrate(300);
+        }
+    } else {
+        alert("Wrong answer 😜 Try again");
+    }
+};
+
+document.getElementById("noBtn").onclick = () => {
+    const btn = document.getElementById("noBtn");
+    btn.style.left = Math.random()*200 - 100 + "px";
+    btn.style.top = Math.random()*200 - 100 + "px";
+};
+
+document.getElementById("yesBtn").onclick = () => {
+    valentineBox.classList.add("hidden");
+    yesBox.classList.remove("hidden");
+    document.body.style.backgroundImage = 'url("love5.jpeg")'; // AFTER YES
+
+    for (let i = 0; i < 25; i++) {
+        const h = document.createElement("div");
+        h.innerHTML = "❣️";
+        h.className = "heart";
+        h.style.left = Math.random()*100 + "vw";
+        h.style.top = Math.random()*100 + "vh";
+        document.body.appendChild(h);
+    }
+};
+</script>
+
+</body>
+</html>
